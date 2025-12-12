@@ -20,7 +20,9 @@ fn main() {
     editor.read_file(file);
 
     loop {
-        if let Ok(event::Event::Key(key)) = event::read() {
+        if let Ok(event::Event::Key(key)) = event::read()
+            && key.is_press()
+        {
             editor.update_with(key);
         }
         editor.update_screen();

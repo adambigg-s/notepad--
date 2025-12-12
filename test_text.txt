@@ -1,2 +1,25 @@
-The Lorem ipsum text is derived from sections 1.10.32 and 1.10.33 of Cicero's De finibus bonorum et malorum.[6][7] The physical source may have been the 1914 Loeb Classical Library edition of De finibus, where the Latin text, presented on the left-hand (even) pages, breaks off on page 34 with "Neque porro quisquam est qui do-" and continues on page 36 with "lorem ipsum ...," suggesting that the galley type of that page was mixed up to make the dummy text seen today.[1]
+#[derive(Default)]
+struct ListNode<T> {
+    data: T,
+    next: *mut ListNode<T>,
+    prev: *mut ListNode<T>,
+}
 
+impl<T> ListNode<T> {
+    fn new(value: T) -> *mut ListNode<T> {
+        Box::into_raw(Box::new(ListNode {
+            data: value,
+            next: ptr::null_mut(),
+            prev: ptr::null_mut(),
+        }))
+    }
+}
+
+#[derive(Default)]
+pub struct LinkedList<T> {
+    head: *mut ListNode<T>,
+    tail: *mut ListNode<T>,
+    len: usize,
+}
+
+The Lorem ipsum text is derived from sections 1.10.32 and 1.10.33 of Cicero's De finibus bonorum et malorum.[6][7] The physical source may have been the 1914 Loeb Classical Library edition of De finibus, where the Latin text, presented on the left-hand (even) pages, breaks off on page 34 with "Neque porro quisquam est qui do-" and continues on page 36 with "lorem ipsum ...," suggesting that the galley type of that page was mixed up to make the dummy text seen today.[1]

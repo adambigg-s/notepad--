@@ -7,13 +7,7 @@ use std::{
 
 use crossterm::event;
 
-use crate::text::{self, Text};
-
-#[derive(Default, Clone, Copy)]
-pub struct Cursor {
-    pub row: usize,
-    pub col: usize,
-}
+use crate::text::{self};
 
 #[derive(Default)]
 pub enum EditorMode {
@@ -22,9 +16,32 @@ pub enum EditorMode {
     Insert,
 }
 
+#[derive(Default, Clone, Copy)]
+pub struct Cursor {
+    pub row: usize,
+    pub col: usize,
+}
+
+impl Cursor {
+    fn move_cursor(&mut self, dx: isize, dy: isize, text: &text::Text) {
+        let nx = (self.col as isize + dx) as usize;
+        let ny = (self.row as isize + dy) as usize;
+
+        let num_lines = text.lines.len();
+        let num_chars = text.lines.get(self.row).line.len();
+
+        if nx < num_chars {
+            self.col = nx;
+        }
+        if ny < num_lines {
+            self.row = ny;
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct Editor {
-    pub text: Text,
+    pub text: text::Text,
     pub cursor: Cursor,
     pub mode: EditorMode,
 }
@@ -60,10 +77,10 @@ impl Editor {
         match key.code {
             | event::KeyCode::Char('q') => process::exit(0),
             | event::KeyCode::Char('i') => self.mode = EditorMode::Insert,
-            | event::KeyCode::Char('h') => todo!(),
-            | event::KeyCode::Char('j') => todo!(),
-            | event::KeyCode::Char('k') => todo!(),
-            | event::KeyCode::Char('l') => todo!(),
+            | event::KeyCode::Char('h') => self.cursor.move_cursor(-1, 0, &self.text),
+            | event::KeyCode::Char('j') => self.cursor.move_cursor(0, 1, &self.text),
+            | event::KeyCode::Char('k') => self.cursor.move_cursor(0, -1, &self.text),
+            | event::KeyCode::Char('l') => self.cursor.move_cursor(1, 0, &self.text),
             | _ => {}
         }
     }
@@ -73,6 +90,11 @@ impl Editor {
             | event::KeyCode::Esc => self.mode = EditorMode::Visual,
             | event::KeyCode::Char(chr) => {
                 self.text.insert_at(self.cursor, chr);
+                self.cursor.move_cursor(1, 0, &self.text);
+            }
+            event::KeyCode::Backspace => {
+                self.text.remove_at(self.cursor);
+                self.cursor.move_cursor(-1, 0, &self.text);
             }
             | _ => {}
         }
@@ -89,6 +111,7 @@ impl Display for Editor {
             output.push('\n');
         });
         write!(frm, "{}", output)?;
+        write!(frm, "\x1b[{};{}H#", self.cursor.row + 1, self.cursor.col + 1)?;
         io::stdout().flush().unwrap();
         Ok(())
     }
