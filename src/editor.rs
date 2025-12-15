@@ -1,19 +1,22 @@
 use std::{
-    fmt::{self, Display},
     fs,
-    io::{self, BufRead, Write},
+    io::{self, BufRead},
     process,
 };
 
 use crossterm::event;
 
-use crate::text::{self};
+use crate::{
+    rendering::ScreenWindow,
+    text::{self},
+};
 
 #[derive(Default)]
 pub enum EditorMode {
     #[default]
     Visual,
     Insert,
+    Select,
 }
 
 #[derive(Default, Clone, Copy)]
@@ -34,7 +37,9 @@ impl Cursor {
             self.col = nx;
         }
         if ny < num_lines {
+            let num_chars = text.lines.get(ny).line.len();
             self.row = ny;
+            self.col = nx.min(num_chars.saturating_sub(1));
         }
     }
 }
@@ -44,6 +49,8 @@ pub struct Editor {
     pub text: text::Text,
     pub cursor: Cursor,
     pub mode: EditorMode,
+
+    pub draw_window: ScreenWindow,
 }
 
 impl Editor {
@@ -70,6 +77,7 @@ impl Editor {
         match self.mode {
             | EditorMode::Visual => self.handle_visual(key),
             | EditorMode::Insert => self.handle_insert(key),
+            | EditorMode::Select => todo!(),
         }
     }
 
@@ -92,27 +100,11 @@ impl Editor {
                 self.text.insert_at(self.cursor, chr);
                 self.cursor.move_cursor(1, 0, &self.text);
             }
-            event::KeyCode::Backspace => {
+            | event::KeyCode::Backspace => {
                 self.text.remove_at(self.cursor);
                 self.cursor.move_cursor(-1, 0, &self.text);
             }
             | _ => {}
         }
-    }
-}
-
-impl Display for Editor {
-    fn fmt(&self, frm: &mut fmt::Formatter) -> fmt::Result {
-        let mut output = String::from("\x1b[0H");
-        self.text.lines.iter().for_each(|line| {
-            line.line.iter().for_each(|char| {
-                output.push(*char);
-            });
-            output.push('\n');
-        });
-        write!(frm, "{}", output)?;
-        write!(frm, "\x1b[{};{}H#", self.cursor.row + 1, self.cursor.col + 1)?;
-        io::stdout().flush().unwrap();
-        Ok(())
     }
 }

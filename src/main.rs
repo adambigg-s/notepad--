@@ -1,4 +1,5 @@
 mod editor;
+mod rendering;
 mod text;
 
 use std::{
